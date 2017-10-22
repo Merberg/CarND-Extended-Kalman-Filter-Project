@@ -55,6 +55,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurements) {
       float theta = measurements.raw_measurements_(1);
       initialize(ro * cos(theta), ro * sin(theta), measurements.timestamp_);
     }
+    cout << "x_ = " << ekf_.x_ << endl;
+    cout << "P_ = " << ekf_.P_ << endl;
     return;
   }
 
@@ -72,7 +74,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurements) {
 
     ekf_.Update(measurements.raw_measurements_);
   } else {
-    Hj_ = tools.CalculateJacobian(ekf_.x_);
+    Hj_ = tools.CalculateJacobian(ekf_.x_, Hj_);
     ekf_.H_ = Hj_;
     ekf_.R_ = R_radar_;
 
@@ -80,17 +82,15 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurements) {
   }
 
   // print the output
-  cout << "x_ = " << ekf_.x_ << endl;
-  cout << "P_ = " << ekf_.P_ << endl;
+  //cout << "x_ = " << ekf_.x_ << endl;
+  //cout << "P_ = " << ekf_.P_ << endl;
 }
 
 //******************************************************************************
 void FusionEKF::initialize(float x, float y, long long ts) {
   //TODO play for better RMSE
   static const float EKF_INIT_VX = 1;
-  static const float EKF_INIT_VY = 1;
-
-  cout << "EKF: " << endl;
+  static const float EKF_INIT_VY = 0;
 
   /**
    Initialize state.

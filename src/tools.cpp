@@ -39,10 +39,14 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
   //calculate the squared root
   rmse = rmse.array().sqrt();
 
+  cout << "rmse: " << rmse << endl;
+  cout << endl;
+
   return rmse;
 }
 
-MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
+MatrixXd Tools::CalculateJacobian(const VectorXd& x_state,
+                                  const MatrixXd& Hj_prev) {
   MatrixXd Hj(3, 4);
   Hj << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
@@ -52,20 +56,20 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
   float vx = x_state(2);
   float vy = x_state(3);
 
-  //check division by zero
-  if (px == 0 || py == 0 || vx == 0 || vy == 0) {
-    cout << "Tools::CalculateJacobian - divide by zero" << endl;
-    return Hj;
-  }
-
   //compute the Jacobian matrix
   float p_ss = px * px + py * py;
   float p_hypot = sqrt(p_ss);
-  float p_1p5 = pow(p_ss, 3 / 2);
-  float dif = vx * py - vy * px;
+  float p_1p5 = pow(p_ss, 1.5);
 
-  Hj << px / p_hypot, py / p_hypot, 0, 0, -py / p_ss, px / p_ss, 0, 0, py * dif
-      / p_1p5, px * dif / p_1p5, px / p_hypot, py / p_hypot;
+  //guard against zeros for division by reusing the previous Hj
+  if (p_ss == 0 || p_hypot == 0 || p_1p5 == 0) {
+    Hj = Hj_prev;
+    cout << "Tools::CalculateJacobian - division by zero, Hj reused" << endl;
+  } else {
+    Hj << px / p_hypot, py / p_hypot, 0, 0, -py / p_ss, px / p_ss, 0, 0, py
+        * (vx * py - vy * px) / p_1p5, px * (vy * px - vx * py) / p_1p5, px
+        / p_hypot, py / p_hypot;
+  }
 
   return Hj;
 }
