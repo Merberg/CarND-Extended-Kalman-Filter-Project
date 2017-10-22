@@ -24,7 +24,8 @@ public:
   /**
   * Run the whole flow of the Kalman Filter from here.
   */
-  void ProcessMeasurement(const MeasurementPackage &measurement_pack);
+  void ProcessMeasurement(const LidarPackage &);
+  void ProcessMeasurement(const RadarPackage &);
 
   /**
   * Kalman Filter update and prediction math lives in here.
@@ -44,6 +45,16 @@ private:
   Eigen::MatrixXd R_radar_;
   Eigen::MatrixXd H_laser_;
   Eigen::MatrixXd Hj_;
+
+  /**
+   * Run the initial measurement
+   */
+  void initialize(float,float,long long);
+
+  /**
+   * Run the predict step
+   */
+  void predict(long long);
 };
 
 #endif /* FusionEKF_H_ */
