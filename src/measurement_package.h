@@ -1,32 +1,18 @@
 #ifndef MEASUREMENT_PACKAGE_H_
 #define MEASUREMENT_PACKAGE_H_
 
-class LidarPackage {
- public:
-  LidarPackage()
-      : timestamp_(0),
-        px_(0.0),
-        py_(0.0) {
-  }
+#include "Eigen/Dense"
 
+class MeasurementPackage {
+public:
   long long timestamp_;
-  float px_;
-  float py_;
-};
 
-class RadarPackage {
- public:
-  RadarPackage()
-      : timestamp_(0),
-        ro_(0.0),
-        theta_(0.0),
-        ro_dot_(0.0) {
-  }
+  enum SensorType{
+    LASER,
+    RADAR
+  } sensor_type_;
 
-  long long timestamp_;
-  float ro_;
-  float theta_;
-  float ro_dot_;
+  Eigen::VectorXd raw_measurements_;
 };
 
 #endif /* MEASUREMENT_PACKAGE_H_ */

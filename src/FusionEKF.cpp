@@ -40,65 +40,44 @@ FusionEKF::~FusionEKF() {
 }
 
 //******************************************************************************
-void FusionEKF::ProcessMeasurement(const LidarPackage &laser_pack) {
+void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurements) {
 
   /*****************************************************************************
    *  Initialization
    ****************************************************************************/
   if (!is_initialized_) {
-    initialize(laser_pack.px_, laser_pack.py_, laser_pack.timestamp_);
+    if (measurements.sensor_type_ == MeasurementPackage::LASER) {
+      float px = measurements.raw_measurements_(0);
+      float py = measurements.raw_measurements_(1);
+      initialize(px, py, measurements.timestamp_);
+    } else {
+      float ro = measurements.raw_measurements_(0);
+      float theta = measurements.raw_measurements_(1);
+      initialize(ro * cos(theta), ro * sin(theta), measurements.timestamp_);
+    }
     return;
   }
 
   /*****************************************************************************
    *  Prediction
    ****************************************************************************/
-  predict(laser_pack.timestamp_);
+  predict(measurements.timestamp_);
 
   /*****************************************************************************
    *  Update
    ****************************************************************************/
-  ekf_.H_ = H_laser_;
-  ekf_.R_ = R_laser_;
+  if (measurements.sensor_type_ == MeasurementPackage::LASER) {
+    ekf_.H_ = H_laser_;
+    ekf_.R_ = R_laser_;
 
-  Eigen::Vector2d z;
-  z << laser_pack.px_, laser_pack.py_;
+    ekf_.Update(measurements.raw_measurements_);
+  } else {
+    Hj_ = tools.CalculateJacobian(ekf_.x_);
+    ekf_.H_ = Hj_;
+    ekf_.R_ = R_radar_;
 
-  ekf_.Update(z);
-
-  // print the output
-  cout << "x_ = " << ekf_.x_ << endl;
-  cout << "P_ = " << ekf_.P_ << endl;
-}
-
-//******************************************************************************
-void FusionEKF::ProcessMeasurement(const RadarPackage &radar_pack) {
-
-  /*****************************************************************************
-   *  Initialization
-   ****************************************************************************/
-  if (!is_initialized_) {
-    initialize(radar_pack.ro_ * cos(radar_pack.theta_),
-               radar_pack.ro_ * sin(radar_pack.theta_), radar_pack.timestamp_);
-    return;
+    ekf_.UpdateEKF(measurements.raw_measurements_);
   }
-
-  /*****************************************************************************
-   *  Prediction
-   ****************************************************************************/
-  predict(radar_pack.timestamp_);
-
-  /*****************************************************************************
-   *  Update
-   ****************************************************************************/
-  Hj_ = tools.CalculateJacobian(ekf_.x_);
-  ekf_.H_ = Hj_;
-  ekf_.R_ = R_radar_;
-
-  Eigen::Vector3d z;
-  z << radar_pack.ro_, radar_pack.theta_, radar_pack.ro_dot_;
-
-  ekf_.UpdateEKF(z);
 
   // print the output
   cout << "x_ = " << ekf_.x_ << endl;

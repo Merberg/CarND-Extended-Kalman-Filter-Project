@@ -24,8 +24,7 @@ public:
   /**
   * Run the whole flow of the Kalman Filter from here.
   */
-  void ProcessMeasurement(const LidarPackage &);
-  void ProcessMeasurement(const RadarPackage &);
+  void ProcessMeasurement(const MeasurementPackage &);
 
   /**
   * Kalman Filter update and prediction math lives in here.
