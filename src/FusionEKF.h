@@ -22,21 +22,25 @@ public:
   virtual ~FusionEKF();
 
   /**
+   * Query the Kalman Filter state
+   */
+  Eigen::Vector4d GetState() {
+    return ekf_.GetState();
+  }
+
+  /**
   * Run the whole flow of the Kalman Filter from here.
   */
   void ProcessMeasurement(const MeasurementPackage &);
 
+private:
   /**
-  * Kalman Filter update and prediction math lives in here.
+  * Kalman Filter class is housed here
   */
   KalmanFilter ekf_;
 
-private:
   // check whether the tracking toolbox was initialized or not (first measurement)
   bool is_initialized_;
-
-  // previous timestamp
-  long long previous_timestamp_;
 
   // tool object used to compute Jacobian and RMSE
   Tools tools;
@@ -46,14 +50,12 @@ private:
   Eigen::MatrixXd Hj_;
 
   /**
-   * Run the initial measurement
+   * Process the Measurements for Lidar and Radar (splitting into methods to
+   * enable change to Template Method in the event another sensor type is added
+   * later.
    */
-  void initialize(float,float,long long);
-
-  /**
-   * Run the predict step
-   */
-  void predict(long long);
+  void ProcessLidarMeasurement(const MeasurementPackage &);
+  void ProcessRadarMeasurement(const MeasurementPackage &);
 };
 
 #endif /* FusionEKF_H_ */

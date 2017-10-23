@@ -14,8 +14,6 @@ using std::vector;
 FusionEKF::FusionEKF() {
   is_initialized_ = false;
 
-  previous_timestamp_ = 0;
-
   // initializing matrices
   R_laser_ = MatrixXd(2, 2);
   R_radar_ = MatrixXd(3, 3);
@@ -42,43 +40,11 @@ FusionEKF::~FusionEKF() {
 //******************************************************************************
 void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurements) {
 
-  /*****************************************************************************
-   *  Initialization
-   ****************************************************************************/
-  if (!is_initialized_) {
-    if (measurements.sensor_type_ == MeasurementPackage::LASER) {
-      float px = measurements.raw_measurements_(0);
-      float py = measurements.raw_measurements_(1);
-      initialize(px, py, measurements.timestamp_);
-    } else {
-      float ro = measurements.raw_measurements_(0);
-      float theta = measurements.raw_measurements_(1);
-      initialize(ro * cos(theta), ro * sin(theta), measurements.timestamp_);
-    }
-    cout << "x_ = " << ekf_.x_ << endl;
-    cout << "P_ = " << ekf_.P_ << endl;
-    return;
-  }
-
-  /*****************************************************************************
-   *  Prediction
-   ****************************************************************************/
-  predict(measurements.timestamp_);
-
-  /*****************************************************************************
-   *  Update
-   ****************************************************************************/
+  //
   if (measurements.sensor_type_ == MeasurementPackage::LASER) {
-    ekf_.H_ = H_laser_;
-    ekf_.R_ = R_laser_;
-
-    ekf_.Update(measurements.raw_measurements_);
+    ProcessLidarMeasurement(measurements);
   } else {
-    Hj_ = tools.CalculateJacobian(ekf_.x_, Hj_);
-    ekf_.H_ = Hj_;
-    ekf_.R_ = R_radar_;
-
-    ekf_.UpdateEKF(measurements.raw_measurements_);
+    ProcessRadarMeasurement(measurements);
   }
 
   // print the output
@@ -87,46 +53,57 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurements) {
 }
 
 //******************************************************************************
-void FusionEKF::initialize(float x, float y, long long ts) {
-  //TODO play for better RMSE
-  static const float EKF_INIT_VX = 1;
-  static const float EKF_INIT_VY = 0;
+void FusionEKF::ProcessLidarMeasurement(
+    const MeasurementPackage &measurements) {
 
-  /**
-   Initialize state.
-   */
-  ekf_.x_ = VectorXd(4);
-  ekf_.x_(0) = x;
-  ekf_.x_(1) = y;
-  ekf_.x_(2) = EKF_INIT_VX;
-  ekf_.x_(3) = EKF_INIT_VY;
+  /*****************************************************************************
+   *  Initialization
+   ****************************************************************************/
+  if (!is_initialized_) {
+    float px = measurements.raw_measurements_(0);
+    float py = measurements.raw_measurements_(1);
+    ekf_.Init(px, py, measurements.timestamp_);
 
-  // record the time
-  previous_timestamp_ = ts;
+    is_initialized_ = true;
+    return;
+  }
 
-  // done initializing, no need to predict or update
-  is_initialized_ = true;
+  /*****************************************************************************
+   *  Prediction
+   ****************************************************************************/
+  ekf_.Predict(measurements.timestamp_);
+
+  /*****************************************************************************
+   *  Update
+   ****************************************************************************/
+  ekf_.Update(H_laser_, R_laser_, measurements.raw_measurements_);
+
 }
 
 //******************************************************************************
-void FusionEKF::predict(long long ts) {
-  static const float NOISE_AX = 9.0;
-  static const float NOISE_AY = 9.0;
+void FusionEKF::ProcessRadarMeasurement(
+    const MeasurementPackage &measurements) {
 
-  float dt = (ts - previous_timestamp_) / 1000000.0;  //in seconds
-  previous_timestamp_ = ts;
-  float dt_2 = dt * dt;
-  float dt_3 = dt * dt_2;
-  float dt_4 = dt * dt_3;
+  /*****************************************************************************
+   *  Initialization
+   ****************************************************************************/
+  if (!is_initialized_) {
+    float ro = measurements.raw_measurements_(0);
+    float theta = measurements.raw_measurements_(1);
+    ekf_.Init(ro * cos(theta), ro * sin(theta), measurements.timestamp_);
 
-  // incorporate the time in the transition matrix
-  ekf_.F_(0, 2) = dt;
-  ekf_.F_(1, 3) = dt;
+    is_initialized_ = true;
+    return;
+  }
 
-  // update the process noise covariance matrix
-  ekf_.Q_ << dt_4 / 4 * NOISE_AX, 0, dt_3 / 2 * NOISE_AX, 0, 0, dt_4 / 4
-      * NOISE_AY, 0, dt_3 / 2 * NOISE_AY, dt_3 / 2 * NOISE_AX, 0, dt_2
-      * NOISE_AX, 0, 0, dt_3 / 2 * NOISE_AY, 0, dt_2 * NOISE_AY;
+  /*****************************************************************************
+   *  Prediction
+   ****************************************************************************/
+  ekf_.Predict(measurements.timestamp_);
 
-  ekf_.Predict();
+  /*****************************************************************************
+   *  Update
+   ****************************************************************************/
+  Hj_ = tools.CalculateJacobian(ekf_.GetState(), Hj_);
+  ekf_.UpdateEKF(Hj_, R_radar_, measurements.raw_measurements_);
 }

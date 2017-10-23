@@ -2,26 +2,12 @@
 #define KALMAN_FILTER_H_
 #include "Eigen/Dense"
 
+/**
+ * KalmanFilter Class is the FrameworkClass for the Template Method
+ * design pattern.
+ */
 class KalmanFilter {
-public:
-
-  // state vector
-  Eigen::VectorXd x_;
-
-  // state covariance matrix
-  Eigen::MatrixXd P_;
-
-  // state transition matrix
-  Eigen::MatrixXd F_;
-
-  // process covariance matrix
-  Eigen::MatrixXd Q_;
-
-  // measurement matrix
-  Eigen::MatrixXd H_;
-
-  // measurement covariance matrix
-  Eigen::MatrixXd R_;
+ public:
 
   /**
    * Constructor
@@ -34,41 +20,70 @@ public:
   virtual ~KalmanFilter();
 
   /**
-   * Init Initializes Kalman filter
-   * @param x_in Initial state
-   * @param P_in Initial state covariance
-   * @param F_in Transition matrix
-   * @param H_in Measurement matrix
-   * @param R_in Measurement covariance matrix
-   * @param Q_in Process covariance matrix
+   * Query the Kalman Filter state
    */
-  void Init(Eigen::VectorXd &x_in, Eigen::MatrixXd &P_in, Eigen::MatrixXd &F_in,
-      Eigen::MatrixXd &H_in, Eigen::MatrixXd &R_in, Eigen::MatrixXd &Q_in);
+  Eigen::Vector4d GetState() {
+    return x_;
+  }
+
+  /**
+   * Init Initializes Kalman filter
+   * @param px initial
+   * @param py initial
+   * @param timestamp initial
+   */
+  void Init(float, float, long long);
 
   /**
    * Prediction Predicts the state and the state covariance
    * using the process model
+   * @param timestamp
    */
-  void Predict();
+  void Predict(long long);
 
   /**
    * Updates the state by using standard Kalman Filter equations
-   * @param z The measurement at k+1
+   * @param H measurement matrix
+   * @param R measurement covariance
+   * @param the measurement at k+1
    */
-  void Update(const Eigen::VectorXd &z);
+  void Update(const Eigen::MatrixXd &, const Eigen::MatrixXd &,
+              const Eigen::VectorXd &);
 
   /**
    * Updates the state by using Extended Kalman Filter equations
+   * @param Hj measurement matrix
+   * @param R measurement covariance
    * @param z The measurement at k+1
    */
-  void UpdateEKF(const Eigen::VectorXd &z);
+  void UpdateEKF(const Eigen::MatrixXd &, const Eigen::MatrixXd &,
+                 const Eigen::VectorXd &);
 
-private:
+ private:
+
+  // state vector
+  Eigen::Vector4d x_;
+
+  // state covariance matrix
+  Eigen::MatrixXd P_;
+
+  // state transition matrix
+  Eigen::MatrixXd F_;
+
+  // process covariance matrix
+  Eigen::MatrixXd Q_;
+
+  // previous timestamp
+  long long previous_timestamp_;
+
   /**
    * Updates the state, given y, using the Kalman Filter equations
-   * @param y The calculated
+   * @param H measurement matrix
+   * @param R measurement covariance
+   * @param y calculated
    */
-  void CalculateState(const Eigen::VectorXd &y);
+  void SetState(const Eigen::MatrixXd &, const Eigen::MatrixXd &,
+                const Eigen::VectorXd &);
 
 };
 

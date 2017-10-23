@@ -27,7 +27,7 @@ class Tools {
   /**
    * A helper method to calculate Jacobians.
    */
-  MatrixXd CalculateJacobian(const VectorXd&, const MatrixXd&);
+  MatrixXd CalculateJacobian(const Eigen::Vector4d&, const MatrixXd&);
 
 };
 
