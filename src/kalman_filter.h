@@ -2,10 +2,6 @@
 #define KALMAN_FILTER_H_
 #include "Eigen/Dense"
 
-/**
- * KalmanFilter Class is the FrameworkClass for the Template Method
- * design pattern.
- */
 class KalmanFilter {
  public:
 
