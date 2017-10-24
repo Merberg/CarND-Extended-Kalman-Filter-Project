@@ -1,19 +1,20 @@
 # Extended Kalman Filter Project
 Self-Driving Car Engineer Nanodegree Program
 
-This project utilize a kalman filter to estimate the state of a moving object of interest with noisy lidar and radar measurements. Passing the project requires obtaining RMSE values that are lower that the tolerance outlined in the project rubric. 
-
-This project involves the Term 2 Simulator which can be downloaded [here](https://github.com/udacity/self-driving-car-sim/releases)
+This project utilizes a kalman filter to estimate the state of a moving object of interest with noisy lidar and radar measurements.  It is run using the Term 2 Simulator which can be downloaded [here](https://github.com/udacity/self-driving-car-sim/releases)
 
 ---
 
 ## Src Files
 The organization of classes within these files differs from that provided for the project.  Specifically, the KalmanFilter class within src/kalman_filter.cpp contains only private members.  This change was made to correct the Feature Envy (coupling) present between the classes.  The Kalman Filter variables that vary based on sensor type, H measurement matrix and R measurement covariance, are provided to the class as parameters by the FusionEKF class.  Should more sensors need to be added, the FusionEKF class could become the interface class for the Template Design Pattern. 
 
+---
+
+## Runtime
+
 INPUT: values provided by the simulator to the c++ program
 
 ["sensor_measurement"] => the measurement that the simulator observed (either lidar or radar)
-
 
 OUTPUT: values provided by the c++ program to the simulator
 
